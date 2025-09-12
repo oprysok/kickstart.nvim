@@ -734,6 +734,16 @@ require('lazy').setup({
             -- This handles overriding only values explicitly passed
             -- by the server configuration above. Useful when disabling
             -- certain features of an LSP (for example, turning off formatting for ts_ls)
+
+            if server_name == 'ts_ls' then
+              server.on_attach = function(client, bufnr)
+                client.server_capabilities.documentFormattingProvider = false
+                -- vim.api.nvim_create_autocmd('BufWritePre', {
+                --   buffer = bufnr,
+                --   command = 'EslintFixAll',
+                -- })
+              end
+            end
             server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
             require('lspconfig')[server_name].setup(server)
           end,
@@ -762,7 +772,7 @@ require('lazy').setup({
         -- Disable "format_on_save lsp_fallback" for languages that don't
         -- have a well standardized coding style. You can add additional
         -- languages here or re-enable it for the disabled ones.
-        local disable_filetypes = { c = true, cpp = true }
+        local disable_filetypes = { c = true, cpp = true, ts = true, tsx = true }
         if disable_filetypes[vim.bo[bufnr].filetype] then
           return nil
         else
