@@ -1,14 +1,26 @@
--- Close fyler buffers before saving session
-vim.api.nvim_create_autocmd('VimLeavePre', {
-  desc = 'Close fyler before session save',
-  group = vim.api.nvim_create_augroup('kickstart-close-fyler', { clear = true }),
-  callback = function()
-    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-      if vim.api.nvim_buf_is_valid(buf) and vim.bo[buf].filetype == "fyler" then
+-- Filetypes to exclude from session
+local excluded_filetypes = { 'fyler', 'dbui', 'dbout' }
+
+local function close_excluded_buffers()
+  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+    if vim.api.nvim_buf_is_valid(buf) then
+      local ft = vim.bo[buf].filetype
+      local bufname = vim.api.nvim_buf_get_name(buf)
+      -- Check filetype or if it's a dadbod buffer
+      if vim.tbl_contains(excluded_filetypes, ft)
+        or bufname:match('^dbui://')
+        or bufname:match('/db_ui/') then
         vim.api.nvim_buf_delete(buf, { force = true })
       end
     end
-  end,
+  end
+end
+
+-- Close excluded buffers before saving session
+vim.api.nvim_create_autocmd('VimLeavePre', {
+  desc = 'Close excluded buffers before session save',
+  group = vim.api.nvim_create_augroup('kickstart-close-excluded-bufs', { clear = true }),
+  callback = close_excluded_buffers,
 })
 
 vim.api.nvim_create_autocmd('VimEnter', {
@@ -30,14 +42,7 @@ return {
     -- Set to 0 to always save
     need = 0,
     branch = false, -- use git branch to save session
-    pre_save = function()
-      -- Close fyler buffers before saving session
-      for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-        if vim.bo[buf].filetype == "fyler" then
-          vim.api.nvim_buf_delete(buf, { force = true })
-        end
-      end
-    end,
+    pre_save = close_excluded_buffers,
   },
 }
 
