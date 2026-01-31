@@ -208,8 +208,8 @@ vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper win
 --- Keybinds for Fyler
 vim.keymap.set('n', '\\', function()
   local fyler = require 'fyler'
-  fyler.open { kind = 'split_left_most' }
-end, { desc = 'Fyler split left most', silent = true })
+  fyler.toggle { kind = 'split_left_most' }
+end, { desc = 'Toggle Fyler', silent = true })
 
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
