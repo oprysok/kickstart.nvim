@@ -9,7 +9,8 @@ local function close_excluded_buffers()
       -- Check filetype or if it's a dadbod buffer
       if vim.tbl_contains(excluded_filetypes, ft)
         or bufname:match('^dbui://')
-        or bufname:match('/db_ui/') then
+        or bufname:match('/db_ui/')
+        or bufname:match('%.dbout$') then
         vim.api.nvim_buf_delete(buf, { force = true })
       end
     end
