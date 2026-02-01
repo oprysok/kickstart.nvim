@@ -13,7 +13,7 @@ return {
 
     require('lualine').setup {
       options = {
-        theme = 'dracula',
+        theme = 'ayu_dark',
       },
       sections = {
         lualine_b = { { 'branch', icon = '', fmt = truncate_branch_name } }, -- Truncate branch name

@@ -8,10 +8,13 @@
 -- }
 
 return {
-  'bluz71/vim-moonfly-colors',
-  name = 'moonfly',
-  priority = 1001,
+  'Shatur/neovim-ayu',
+  name = 'ayu',
+  priority = 1000,
   config = function()
-    vim.cmd.colorscheme 'moonfly'
+    require('ayu').setup({
+      mirage = false,
+    })
+    vim.cmd.colorscheme 'ayu-dark'
   end,
 }
