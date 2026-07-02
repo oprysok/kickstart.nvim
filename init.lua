@@ -222,6 +222,7 @@ vim.keymap.set('n', '<leader>bo', function()
   end
 end, { desc = 'Close all [B]uffers except this [O]ne' })
 
+vim.keymap.set('n', '<leader>cb', '<cmd>%bd|e#<CR>', { desc = '[C]lear All [B]uffers but current' })
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
 
@@ -797,7 +798,7 @@ require('lazy').setup({
         -- python = { "isort", "black" },
         --
         -- You can use 'stop_after_first' to run the first available formatter from the list
-        javascript = { "prettierd", "prettier", stop_after_first = true },
+        javascript = { 'prettierd', 'prettier', stop_after_first = true },
         javascriptreact = { 'prettierd', 'prettier', stop_after_first = true },
         typescript = { 'prettierd', 'prettier', stop_after_first = true },
         typescriptreact = { 'prettierd', 'prettier', stop_after_first = true },
