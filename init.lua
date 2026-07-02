@@ -99,7 +99,7 @@ do
   vim.g.maplocalleader = ' '
 
   -- Set to true if you have a Nerd Font installed and selected in the terminal
-  vim.g.have_nerd_font = false
+  vim.g.have_nerd_font = true
 
   -- [[ Setting options ]]
   --  See `:help vim.o`
@@ -157,6 +157,8 @@ do
   --   and `:help lua-guide-options`
   vim.o.list = true
   vim.opt.listchars = { tab = '» ', trail = '·', nbsp = '␣' }
+  -- Hide the `~` characters on empty lines below the buffer
+  vim.opt.fillchars = { eob = ' ' }
 
   -- Preview substitutions live, as you type!
   vim.o.inccommand = 'split'
@@ -239,6 +241,24 @@ do
   -- vim.keymap.set("n", "<C-S-l>", "<C-w>L", { desc = "Move window to the right" })
   -- vim.keymap.set("n", "<C-S-j>", "<C-w>J", { desc = "Move window to the lower" })
   -- vim.keymap.set("n", "<C-S-k>", "<C-w>K", { desc = "Move window to the upper" })
+
+  -- Keybind for Fyler file explorer
+  vim.keymap.set('n', '\\', function()
+    local fyler = require 'fyler'
+    fyler.toggle { kind = 'split_left_most' }
+  end, { desc = 'Toggle Fyler', silent = true })
+
+  -- Delete all buffers except current
+  vim.keymap.set('n', '<leader>bo', function()
+    local current = vim.api.nvim_get_current_buf()
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+      if buf ~= current and vim.api.nvim_buf_is_loaded(buf) then
+        vim.api.nvim_buf_delete(buf, { force = false })
+      end
+    end
+  end, { desc = 'Close all [B]uffers except this [O]ne' })
+
+  vim.keymap.set('n', '<leader>cb', '<cmd>%bd|e#<CR>', { desc = '[C]lear All [B]uffers but current' })
 
   -- [[ Basic Autocommands ]]
   --  See `:help lua-guide-autocommands`
@@ -382,18 +402,19 @@ do
   -- change the command under that to load whatever the name of that colorscheme is.
   --
   -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
-  vim.pack.add { gh 'folke/tokyonight.nvim' }
-  ---@diagnostic disable-next-line: missing-fields
-  require('tokyonight').setup {
-    styles = {
-      comments = { italic = false }, -- Disable italics in comments
-    },
-  }
-
-  -- Load the colorscheme here.
-  -- Like many other themes, this one has different styles, and you could load
-  -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
-  vim.cmd.colorscheme 'tokyonight-night'
+  --
+  -- NOTE: The colorscheme is set in `lua/custom/plugins/colorscheme.lua` (ayu-dark),
+  -- which loads at the end of this file. The default tokyonight setup is left here,
+  -- commented out, as a reference.
+  -- vim.pack.add { gh 'folke/tokyonight.nvim' }
+  -- ---@diagnostic disable-next-line: missing-fields
+  -- require('tokyonight').setup {
+  --   styles = {
+  --     comments = { italic = false }, -- Disable italics in comments
+  --   },
+  -- }
+  --
+  -- vim.cmd.colorscheme 'tokyonight-night'
 
   -- Highlight todo, notes, etc in comments
   vim.pack.add { gh 'folke/todo-comments.nvim' }
@@ -701,9 +722,16 @@ do
     --    https://github.com/pmizio/typescript-tools.nvim
     --
     -- But for many setups, the LSP (`ts_ls`) will work just fine
-    -- ts_ls = {},
+    ts_ls = {
+      -- Let prettier (via conform.nvim) own formatting instead of ts_ls
+      on_attach = function(client)
+        client.server_capabilities.documentFormattingProvider = false
+      end,
+    },
 
-    stylua = {}, -- Used to format Lua code
+    -- NOTE: stylua is a formatter, not a language server, so it is installed via
+    -- `ensure_installed` below and run through conform.nvim (see the Formatting section)
+    -- rather than being enabled here as an LSP.
 
     -- Special Lua Config, as recommended by neovim help docs
     lua_ls = {
@@ -760,6 +788,9 @@ do
   local ensure_installed = vim.tbl_keys(servers or {})
   vim.list_extend(ensure_installed, {
     -- You can add other tools here that you want Mason to install
+    'stylua', -- Used to format Lua code
+    'prettier', -- Used to format TypeScript/JavaScript code
+    'prettierd', -- Faster prettier daemon
   })
 
   require('mason-tool-installer').setup { ensure_installed = ensure_installed }
@@ -782,8 +813,11 @@ do
     format_on_save = function(bufnr)
       -- You can specify filetypes to autoformat on save here:
       local enabled_filetypes = {
-        -- lua = true,
-        -- python = true,
+        lua = true,
+        javascript = true,
+        javascriptreact = true,
+        typescript = true,
+        typescriptreact = true,
       }
       if enabled_filetypes[vim.bo[bufnr].filetype] then
         return { timeout_ms = 500 }
@@ -801,7 +835,11 @@ do
       -- python = { "isort", "black" },
       --
       -- You can use 'stop_after_first' to run the first available formatter from the list
-      -- javascript = { "prettierd", "prettier", stop_after_first = true },
+      lua = { 'stylua' },
+      javascript = { 'prettierd', 'prettier', stop_after_first = true },
+      javascriptreact = { 'prettierd', 'prettier', stop_after_first = true },
+      typescript = { 'prettierd', 'prettier', stop_after_first = true },
+      typescriptreact = { 'prettierd', 'prettier', stop_after_first = true },
     },
   }
 
@@ -824,8 +862,8 @@ do
   --    See the README about individual language/framework/plugin snippets:
   --    https://github.com/rafamadriz/friendly-snippets
   --
-  -- vim.pack.add { gh 'rafamadriz/friendly-snippets' }
-  -- require('luasnip.loaders.from_vscode').lazy_load()
+  vim.pack.add { gh 'rafamadriz/friendly-snippets' }
+  require('luasnip.loaders.from_vscode').lazy_load()
 
   -- [[ Autocomplete Engine ]]
   vim.pack.add { { src = gh 'saghen/blink.cmp', version = vim.version.range '1.*' } }
@@ -852,7 +890,7 @@ do
       -- <c-k>: Toggle signature help
       --
       -- See `:help blink-cmp-config-keymap` for defining your own keymap
-      preset = 'default',
+      preset = 'enter',
 
       -- For more advanced Luasnip keymaps (e.g. selecting choice nodes, expansion) see:
       --    https://github.com/L3MON4D3/LuaSnip?tab=readme-ov-file#keymaps
@@ -872,6 +910,15 @@ do
 
     sources = {
       default = { 'lsp', 'path', 'snippets' },
+      -- Use vim-dadbod-completion in SQL buffers (see lua/custom/plugins/dadbod.lua)
+      per_filetype = {
+        sql = { 'dadbod', 'snippets', 'path' },
+        mysql = { 'dadbod', 'snippets', 'path' },
+        plsql = { 'dadbod', 'snippets', 'path' },
+      },
+      providers = {
+        dadbod = { name = 'Dadbod', module = 'vim_dadbod_completion.blink' },
+      },
     },
 
     snippets = { preset = 'luasnip' },
@@ -904,7 +951,7 @@ do
   vim.pack.add { { src = gh 'nvim-treesitter/nvim-treesitter', version = 'main' } }
 
   -- Ensure basic parsers are installed
-  local parsers = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' }
+  local parsers = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc', 'typescript', 'javascript' }
   require('nvim-treesitter').install(parsers)
 
   ---@param buf integer
@@ -976,7 +1023,7 @@ do
   -- NOTE: You can add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --
   --  Uncomment the following line and add your plugins to `lua/custom/plugins/*.lua` to get going.
-  -- require 'custom.plugins'
+  require 'custom.plugins'
 end
 
 -- The line beneath this is called `modeline`. See `:help modeline`
