@@ -729,6 +729,10 @@ do
       end,
     },
 
+    -- Terraform / OpenTofu language server (mason installs `terraform-ls`).
+    -- Uses the `terraform` binary on PATH for validation.
+    terraformls = {},
+
     -- NOTE: stylua is a formatter, not a language server, so it is installed via
     -- `ensure_installed` below and run through conform.nvim (see the Formatting section)
     -- rather than being enabled here as an LSP.
@@ -818,6 +822,8 @@ do
         javascriptreact = true,
         typescript = true,
         typescriptreact = true,
+        terraform = true,
+        ['terraform-vars'] = true,
       }
       if enabled_filetypes[vim.bo[bufnr].filetype] then
         return { timeout_ms = 500 }
@@ -840,6 +846,8 @@ do
       javascriptreact = { 'prettierd', 'prettier', stop_after_first = true },
       typescript = { 'prettierd', 'prettier', stop_after_first = true },
       typescriptreact = { 'prettierd', 'prettier', stop_after_first = true },
+      terraform = { 'terraform_fmt' },
+      ['terraform-vars'] = { 'terraform_fmt' },
     },
   }
 
@@ -951,7 +959,8 @@ do
   vim.pack.add { { src = gh 'nvim-treesitter/nvim-treesitter', version = 'main' } }
 
   -- Ensure basic parsers are installed
-  local parsers = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc', 'typescript', 'javascript' }
+  local parsers =
+    { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc', 'typescript', 'javascript', 'terraform', 'hcl' }
   require('nvim-treesitter').install(parsers)
 
   ---@param buf integer
